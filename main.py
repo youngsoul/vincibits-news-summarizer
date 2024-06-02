@@ -19,8 +19,7 @@ load_dotenv()
 news_api_key = os.environ.get("NEWS_API_KEY")
 
 client = openai.OpenAI()
-model = "gpt-3.5-turbo-16k"
-
+model = "gpt-3.5-turbo"
 
 def get_news(topic):
     url = (
@@ -68,8 +67,8 @@ def get_news(topic):
 
 
 class AssistantManager:
-    thread_id = "thread_I26JxIevtnUI3vVOMhggtNUE"
-    assistant_id = "asst_94vjFtf7fylX1TAeY88Sg5vT"
+    thread_id = None
+    assistant_id = None
 
     def __init__(self, model: str = model):
         self.client = client
@@ -88,6 +87,9 @@ class AssistantManager:
             self.thread = self.client.beta.threads.retrieve(
                 thread_id=AssistantManager.thread_id
             )
+    def delete_assistant(self):
+        if AssistantManager.assistant_id is not None:
+            self.client.beta.assistants.delete(assistant_id=AssistantManager.assistant_id)
 
     def create_assistant(self, name, instructions, tools):
         if not self.assistant:
@@ -192,8 +194,14 @@ class AssistantManager:
         print(f"Run-Steps::: {run_steps}")
         return run_steps.data
 
+manager: AssistantManager= None
+
+def delete_assistant():
+    print(f"Deleting Assistant: {AssistantManager.assistant_id}")
+    manager.delete_assistant()
 
 def main():
+    global manager
     # news = get_news("bitcoin")
     # print(news[0])
 
@@ -205,6 +213,7 @@ def main():
     with st.form(key="user_input_form"):
         instructions = st.text_input("Enter topic:")
         submit_button = st.form_submit_button(label="Run Assistant")
+        delete_button = st.form_submit_button(label="Delete Assistant", on_click=delete_assistant)
 
         if submit_button:
             manager.create_assistant(
